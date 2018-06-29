@@ -1,25 +1,8 @@
 package nsa.datawave.webservice.common.audit;
 
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSConsumer;
-import javax.jms.JMSContext;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.ws.rs.core.MultivaluedMap;
-
+import com.google.common.collect.Lists;
 import nsa.datawave.webservice.common.audit.Auditor.AuditType;
 import nsa.datawave.webservice.common.exception.DatawaveWebApplicationException;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.hornetq.api.core.TransportConfiguration;
@@ -42,7 +25,21 @@ import org.junit.Test;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.reflect.Whitebox;
 
-import com.google.common.collect.Lists;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSConsumer;
+import javax.jms.JMSContext;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.ws.rs.core.MultivaluedMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.junit.Assert.assertTrue;
 
 public class AuditBeanTest {
     
