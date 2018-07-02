@@ -458,7 +458,6 @@ public class CachedResultsBean {
                     queryMap.putSingle(AuditParameters.USER_DN, q.getUserDN());
                     queryMap.putSingle("logicClass", logic.getLogicName());
                     auditParameters.clear();
-                    auditParameters.setPrincipal(p);
                     auditParameters.validate(queryMap);
                     try {
                         auditParameters.setSelectors(logic.getSelectors(q));
@@ -1310,7 +1309,6 @@ public class CachedResultsBean {
                 params.putSingle(QueryParameters.QUERY_STRING, auditMessage.toString());
                 params.putAll(queryParameters);
                 auditParameters.clear();
-                auditParameters.setPrincipal(p);
                 auditParameters.validate(params);
                 auditor.audit(auditParameters);
             }
