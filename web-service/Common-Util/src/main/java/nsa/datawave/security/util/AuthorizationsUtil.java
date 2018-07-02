@@ -85,6 +85,9 @@ public class AuthorizationsUtil {
         if (null == principal || null == authsMap || authsMap.isEmpty()) {
             mergedAuths.add(new Authorizations());
         } else {
+            
+            HashSet<String> missingAuths = (requested == null) ? new HashSet<String>() : new HashSet<>(requested);
+            
             Collection<String> userAuths = null;
             // Find the user DN as used in the principal's authorization map
             String userDN = principal.getUserDN();
@@ -95,9 +98,15 @@ public class AuthorizationsUtil {
                 }
             }
             // Intersect the user's auths against the request auths and add that to the return map first.
-            userAuths = downgradeUserAuths(authsMap.get(userDN), requested);
-            if (userAuths != null)
+            userAuths = authsMap.get(userDN);
+            if (userAuths != null) {
+                if (null != requested) {
+                    missingAuths.removeAll(userAuths);
+                    userAuths = new HashSet<>(userAuths);
+                    userAuths.retainAll(requested);
+                }
                 mergedAuths.add(new Authorizations(userAuths.toArray(new String[userAuths.size()])));
+            }
             // Now add the rest of the auths, skipping the user's auths
             for (Map.Entry<String,Collection<String>> entry : authsMap.entrySet()) {
                 Collection<String> auths = entry.getValue();
@@ -105,24 +114,13 @@ public class AuthorizationsUtil {
                     mergedAuths.add(new Authorizations(auths.toArray(new String[auths.size()])));
                 }
             }
-        }
-        return mergedAuths;
-    }
-    
-    private static Collection<String> downgradeUserAuths(Collection<String> userAuths, Collection<String> requestedAuths) {
-        HashSet<String> downgradedAuths = (userAuths == null) ? new HashSet<String>() : new HashSet<>(userAuths);
-        HashSet<String> missingAuths = (requestedAuths == null) ? new HashSet<String>() : new HashSet<>(requestedAuths);
-        if (null != userAuths) {
-            if (null != requestedAuths) {
-                missingAuths.removeAll(userAuths);
-                downgradedAuths.retainAll(requestedAuths);
+            
+            if (!missingAuths.isEmpty()) {
+                throw new IllegalArgumentException("User requested authorizations that they don't have. Missing: " + missingAuths.toString() + ", Requested: "
+                                + requested + ", User: " + userAuths);
             }
         }
-        if (!missingAuths.isEmpty()) {
-            throw new IllegalArgumentException("User requested authorizations that they don't have. Missing: " + missingAuths.toString() + ", Requested: "
-                            + requestedAuths + ", User: " + userAuths);
-        }
-        return downgradedAuths;
+        return mergedAuths;
     }
     
     /**
@@ -133,30 +131,38 @@ public class AuthorizationsUtil {
      *
      * @param principal
      *            the principal representing the user to verify that {@code requested} are all valid authorizations
-     * @param requestedAuths
+     * @param requested
      *            the requested downgrade authorizations
      * @return requested, unless the user represented by {@code principal} does not have one or more of the auths in {@code requested}
      */
-    public static String downgradeUserAuths(Principal principal, String requestedAuths) {
-        
-        List<String> requestedAuthsList = null;
-        if (!StringUtils.isEmpty(requestedAuths)) {
-            requestedAuthsList = splitAuths(requestedAuths);
+    public static String downgradeUserAuths(Principal principal, String requested) {
+        if (requested == null || requested.trim().isEmpty()) {
+            throw new IllegalArgumentException("Requested authorizations must not be empty");
         }
         
+        List<String> requestedList = AuthorizationsUtil.splitAuths(requested);
         // Find all authorizations the user has access to
-        List<String> userAuthsList = null;
-        String userAuths = buildUserAuthorizationString(principal);
-        if (!StringUtils.isEmpty(userAuths)) {
-            userAuthsList = splitAuths(userAuths);
+        String userAuths = AuthorizationsUtil.buildUserAuthorizationString(principal);
+        List<String> userList = AuthorizationsUtil.splitAuths(userAuths);
+        List<String> missingAuths = new ArrayList<>();
+        List<String> finalAuthsList = new ArrayList<>();
+        
+        for (String temp : requestedList) {
+            // user requested auth they don't have
+            if (!userList.contains(temp)) {
+                missingAuths.add(temp);
+            } else { // user requested auth they do have
+                finalAuthsList.add(temp);
+            }
         }
-        
-        Collection<String> downgradedAuths = downgradeUserAuths(userAuthsList, requestedAuthsList);
-        
-        if (!downgradedAuths.isEmpty())
-            return AuthorizationsUtil.buildAuthorizationString(Collections.singletonList(downgradedAuths));
-        else
-            return "";
+        // All auths requested are auths the user has, return downgraded string for auths
+        if (missingAuths.isEmpty()) {
+            String finalAuths = AuthorizationsUtil.buildAuthorizationString(Collections.singletonList(finalAuthsList));
+            return finalAuths;
+        } else {// missing auths.size() > 0; user requested auths they don't have
+            throw new IllegalArgumentException("User requested authorizations that they don't have. Missing: " + missingAuths.toString() + ", Requested: "
+                            + requested + ", User: " + userAuths.toString());
+        }
     }
     
     public static List<String> splitAuths(String requestedAuths) {
