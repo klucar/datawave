@@ -4,6 +4,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import nsa.datawave.query.rewrite.attributes.AttributeFactory;
 import nsa.datawave.query.rewrite.config.RefactoredShardQueryConfiguration;
 import nsa.datawave.query.rewrite.exceptions.DatawaveFatalQueryException;
 import nsa.datawave.query.rewrite.jexl.ArithmeticJexlEngines;
@@ -11,6 +12,7 @@ import nsa.datawave.query.rewrite.jexl.JexlASTHelper;
 import nsa.datawave.query.rewrite.jexl.JexlNodeFactory;
 import nsa.datawave.query.rewrite.jexl.JexlNodeFactory.ContainerType;
 import nsa.datawave.query.rewrite.jexl.functions.arguments.RefactoredJexlArgumentDescriptor;
+import nsa.datawave.query.rewrite.jexl.visitors.EventDataQueryExpressionVisitor;
 import nsa.datawave.query.util.DateIndexHelper;
 import nsa.datawave.query.util.MetadataHelper;
 import nsa.datawave.webservice.query.exception.BadRequestQueryException;
@@ -82,6 +84,11 @@ public class ContentFunctionsDescriptor implements RefactoredJexlFunctionArgumen
             } else {
                 return JexlNodeFactory.createAndNode(nodes);
             }
+        }
+        
+        @Override
+        public void addFilters(AttributeFactory attributeFactory, Map<String,EventDataQueryExpressionVisitor.ExpressionFilter> filterMap) {
+            // noop, covered by getIndexQuery (see comments on interface)
         }
         
         @Override

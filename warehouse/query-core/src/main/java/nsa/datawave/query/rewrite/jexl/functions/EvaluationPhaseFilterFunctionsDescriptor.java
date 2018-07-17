@@ -5,13 +5,16 @@ import java.text.ParseException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import nsa.datawave.query.rewrite.Constants;
+import nsa.datawave.query.rewrite.attributes.AttributeFactory;
 import nsa.datawave.query.rewrite.config.RefactoredShardQueryConfiguration;
 import nsa.datawave.query.rewrite.jexl.JexlASTHelper;
 import nsa.datawave.query.rewrite.jexl.JexlNodeFactory;
 import nsa.datawave.query.rewrite.jexl.functions.arguments.RefactoredJexlArgumentDescriptor;
+import nsa.datawave.query.rewrite.jexl.visitors.EventDataQueryExpressionVisitor;
 import nsa.datawave.query.util.DateIndexHelper;
 import nsa.datawave.query.util.MetadataHelper;
 
@@ -32,11 +35,12 @@ public class EvaluationPhaseFilterFunctionsDescriptor implements RefactoredJexlF
      */
     public static class EvaluationPhaseFilterJexlArgumentDescriptor implements RefactoredJexlArgumentDescriptor {
         private static final Logger log = Logger.getLogger(EvaluationPhaseFilterJexlArgumentDescriptor.class);
+        
         private static final ImmutableSet<String> regexFunctions = ImmutableSet.of("excludeRegex", "includeRegex");
         private static final ImmutableSet<String> andExpansionFunctions = ImmutableSet.of("isNull");
-        private static final ImmutableSet<String> dateComparisonFunctions = ImmutableSet.of("afterDate", "beforeDate", "betweenDates", "afterLoadDate",
-                        "beforeLoadDate", "betweenLoadDates");
         private static final ImmutableSet<String> dateBetweenFunctions = ImmutableSet.of("betweenDates", "betweenLoadDates");
+        private static final String MATCHCOUNTOF = "matchesAtLeastCountOf";
+        private static final String TIMEFUNCTION = "timeFunction";
         
         private final ASTFunctionNode node;
         
@@ -141,6 +145,25 @@ public class EvaluationPhaseFilterFunctionsDescriptor implements RefactoredJexlF
         }
         
         @Override
+        public void addFilters(AttributeFactory attributeFactory, Map<String,EventDataQueryExpressionVisitor.ExpressionFilter> filterMap) {
+            // Since the getIndexQuery does not supply actual filters on the fields, we need to add those filters here
+            Set<String> queryFields = fields(null, null);
+            // argument 0 (child 2) is the fieldname, argument 1 (child 3) is the regex
+            String regex = (regexArguments() ? JexlASTHelper.getLiteral(node.jjtGetChild(3)).image : null);
+            for (String fieldName : queryFields) {
+                EventDataQueryExpressionVisitor.ExpressionFilter f = filterMap.get(fieldName);
+                if (f == null) {
+                    filterMap.put(fieldName, f = new EventDataQueryExpressionVisitor.ExpressionFilter(attributeFactory, fieldName));
+                }
+                if (regex == null) {
+                    f.acceptAllValues();
+                } else {
+                    f.addFieldPattern(regex);
+                }
+            }
+        }
+        
+        @Override
         public Set<String> fieldsForNormalization(MetadataHelper helper, Set<String> datatypeFilter, int arg) {
             // we do not want to normalize any of the regex arguments, nor any of the date arguments.
             Set<String> fields = Collections.emptySet();
@@ -153,23 +176,14 @@ public class EvaluationPhaseFilterFunctionsDescriptor implements RefactoredJexlF
             node.jjtAccept(functionMetadata, null);
             Set<String> fields = Sets.newHashSet();
             
-            if (regexFunctions.contains(functionMetadata.name())) {
-                // magic happens here
-                List<JexlNode> arguments = functionMetadata.args();
-                
-                if (arguments.size() == 2) {
-                    fields.addAll(JexlASTHelper.getIdentifierNames(arguments.get(0)));
-                }
-            } else if (dateComparisonFunctions.contains(functionMetadata.name())) {
-                List<JexlNode> arguments = functionMetadata.args();
-                if (arguments.size() >= 2) {
-                    fields.addAll(JexlASTHelper.getIdentifierNames(arguments.get(0)));
-                }
-            } else if (andExpansionFunctions.contains(functionMetadata.name())) {
-                List<JexlNode> arguments = functionMetadata.args();
-                if (arguments.size() == 1) {
-                    fields.addAll(JexlASTHelper.getIdentifierNames(arguments.get(0)));
-                }
+            List<JexlNode> arguments = functionMetadata.args();
+            if (MATCHCOUNTOF.equals(functionMetadata.name())) {
+                fields.addAll(JexlASTHelper.getIdentifierNames(arguments.get(1)));
+            } else if (TIMEFUNCTION.equals(functionMetadata.name())) {
+                fields.addAll(JexlASTHelper.getIdentifierNames(arguments.get(0)));
+                fields.addAll(JexlASTHelper.getIdentifierNames(arguments.get(1)));
+            } else {
+                fields.addAll(JexlASTHelper.getIdentifierNames(arguments.get(0)));
             }
             return fields;
         }
@@ -179,26 +193,14 @@ public class EvaluationPhaseFilterFunctionsDescriptor implements RefactoredJexlF
             FunctionJexlNodeVisitor functionMetadata = new FunctionJexlNodeVisitor();
             node.jjtAccept(functionMetadata, null);
             
-            if (regexFunctions.contains(functionMetadata.name())) {
-                // magic happens here
-                List<JexlNode> arguments = functionMetadata.args();
-                
-                if (arguments.size() == 2) {
-                    return RefactoredJexlArgumentDescriptor.Fields.product(arguments.get(0));
-                }
-            } else if (dateComparisonFunctions.contains(functionMetadata.name())) {
-                List<JexlNode> arguments = functionMetadata.args();
-                if (arguments.size() >= 2) {
-                    return RefactoredJexlArgumentDescriptor.Fields.product(arguments.get(0));
-                }
-            } else if (andExpansionFunctions.contains(functionMetadata.name())) {
-                List<JexlNode> arguments = functionMetadata.args();
-                if (arguments.size() == 1) {
-                    return RefactoredJexlArgumentDescriptor.Fields.product(arguments.get(0));
-                }
+            List<JexlNode> arguments = functionMetadata.args();
+            if (MATCHCOUNTOF.equals(functionMetadata.name())) {
+                return RefactoredJexlArgumentDescriptor.Fields.product(arguments.get(1));
+            } else if (TIMEFUNCTION.equals(functionMetadata.name())) {
+                return RefactoredJexlArgumentDescriptor.Fields.product(arguments.get(0), arguments.get(1));
+            } else {
+                return RefactoredJexlArgumentDescriptor.Fields.product(arguments.get(0));
             }
-            
-            return Collections.emptySet();
         }
         
         @Override

@@ -1,11 +1,14 @@
 package nsa.datawave.query.rewrite.jexl.functions;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
+import nsa.datawave.query.rewrite.attributes.AttributeFactory;
 import nsa.datawave.query.rewrite.config.RefactoredShardQueryConfiguration;
 import nsa.datawave.query.rewrite.jexl.JexlASTHelper;
 import nsa.datawave.query.rewrite.jexl.functions.arguments.RefactoredJexlArgumentDescriptor;
+import nsa.datawave.query.rewrite.jexl.visitors.EventDataQueryExpressionVisitor;
 import nsa.datawave.query.util.DateIndexHelper;
 import nsa.datawave.query.util.MetadataHelper;
 
@@ -47,6 +50,11 @@ public class GroupingRequiredFilterFunctionsDescriptor implements RefactoredJexl
             
             // 'true' is returned to imply that there is no range lookup possible for this function
             return TRUE_NODE;
+        }
+        
+        @Override
+        public void addFilters(AttributeFactory attributeFactory, Map<String,EventDataQueryExpressionVisitor.ExpressionFilter> filterMap) {
+            // noop, covered by getIndexQuery (see comments on interface)
         }
         
         @Override

@@ -2,12 +2,19 @@ package nsa.datawave.query.rewrite.jexl.visitors;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
 import nsa.datawave.data.type.Type;
 import nsa.datawave.query.data.parsers.DatawaveKey;
 import nsa.datawave.query.rewrite.attributes.*;
 import nsa.datawave.query.rewrite.jexl.JexlASTHelper;
 import nsa.datawave.query.rewrite.jexl.LiteralRange;
+import nsa.datawave.query.rewrite.jexl.functions.EvaluationPhaseFilterFunctions;
+import nsa.datawave.query.rewrite.jexl.functions.EvaluationPhaseFilterFunctionsDescriptor;
+import nsa.datawave.query.rewrite.jexl.functions.RefactoredJexlFunctionArgumentDescriptorFactory;
+import nsa.datawave.query.rewrite.jexl.functions.arguments.RefactoredJexlArgumentDescriptor;
+import nsa.datawave.query.rewrite.postprocessing.tf.Function;
 import nsa.datawave.query.rewrite.predicate.Filter;
+import nsa.datawave.query.util.MetadataHelper;
 import org.apache.accumulo.core.data.Key;
 import org.apache.commons.jexl2.parser.*;
 import org.apache.log4j.Logger;
@@ -54,6 +61,8 @@ public class EventDataQueryExpressionVisitor extends BaseVisitor {
          */
         final AtomicBoolean nullValueFlag;
         
+        final AtomicBoolean acceptAll;
+        
         public ExpressionFilter(AttributeFactory attributeFactory, String fieldName) {
             this.attributeFactory = attributeFactory;
             this.fieldName = fieldName;
@@ -61,6 +70,7 @@ public class EventDataQueryExpressionVisitor extends BaseVisitor {
             this.fieldPatterns = new HashSet<>();
             this.fieldRanges = new HashSet<>();
             this.nullValueFlag = new AtomicBoolean(false);
+            this.acceptAll = new AtomicBoolean(false);
         }
         
         public String getFieldName() {
@@ -89,6 +99,10 @@ public class EventDataQueryExpressionVisitor extends BaseVisitor {
             fieldRanges.add(range);
         }
         
+        public void acceptAllValues() {
+            acceptAll.set(true);
+        }
+        
         /**
          *
          * @param key
@@ -100,6 +114,9 @@ public class EventDataQueryExpressionVisitor extends BaseVisitor {
             final String keyFieldName = JexlASTHelper.deconstructIdentifier(datawaveKey.getFieldName(), false);
             
             if (fieldName.equals(keyFieldName)) {
+                if (acceptAll.get()) {
+                    return true;
+                }
                 
                 final String keyFieldValue = datawaveKey.getFieldValue();
                 final Set<String> normalizedFieldValues = EventDataQueryExpressionVisitor.extractNormalizedAttributes(attributeFactory, keyFieldName,
@@ -205,6 +222,15 @@ public class EventDataQueryExpressionVisitor extends BaseVisitor {
         } else {
             super.visit(node, data);
         }
+        
+        return null;
+    }
+    
+    @Override
+    public Object visit(ASTFunctionNode node, Object data) {
+        
+        RefactoredJexlArgumentDescriptor desc = RefactoredJexlFunctionArgumentDescriptorFactory.F.getArgumentDescriptor(node);
+        desc.addFilters(attributeFactory, filterMap);
         
         return null;
     }
