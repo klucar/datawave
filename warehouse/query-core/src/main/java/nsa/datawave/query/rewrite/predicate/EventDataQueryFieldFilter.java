@@ -48,7 +48,7 @@ public class EventDataQueryFieldFilter extends KeyProjection implements EventDat
     protected Key document = null;
     
     @Override
-    public void setDocumentKey(Key document) {
+    public void startNewDocument(Key document) {
         this.document = document;
     }
     

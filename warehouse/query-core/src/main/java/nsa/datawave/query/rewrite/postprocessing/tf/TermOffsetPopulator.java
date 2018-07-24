@@ -16,7 +16,6 @@ import nsa.datawave.core.iterators.TermFrequencyIterator.FieldValue;
 import nsa.datawave.data.type.NoOpType;
 import nsa.datawave.data.type.Type;
 import nsa.datawave.ingest.protobuf.TermWeight;
-import nsa.datawave.marking.ColumnVisibilityCache;
 import nsa.datawave.query.rewrite.Constants;
 import nsa.datawave.query.rewrite.attributes.Content;
 import nsa.datawave.query.rewrite.attributes.Document;
@@ -25,9 +24,7 @@ import nsa.datawave.query.rewrite.jexl.functions.TermFrequencyList;
 import nsa.datawave.query.rewrite.jexl.functions.TermFrequencyList.Zone;
 import nsa.datawave.query.rewrite.jexl.visitors.LiteralNodeSubsetVisitor;
 import nsa.datawave.query.rewrite.predicate.EventDataQueryFilter;
-import nsa.datawave.query.rewrite.predicate.Filter;
 
-import nsa.datawave.util.StringUtils;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -148,7 +145,7 @@ public class TermOffsetPopulator {
         
         // set the document context on the filter
         if (evaluationFilter != null) {
-            evaluationFilter.setDocumentKey(docKey);
+            evaluationFilter.startNewDocument(docKey);
         }
         
         Map<String,TermFrequencyList> termOffsetMap = Maps.newHashMap();

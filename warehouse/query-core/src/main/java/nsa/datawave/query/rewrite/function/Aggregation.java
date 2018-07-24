@@ -5,7 +5,6 @@ import java.util.Map.Entry;
 import nsa.datawave.query.rewrite.attributes.Document;
 import nsa.datawave.query.rewrite.iterator.aggregation.DocumentData;
 import nsa.datawave.query.rewrite.predicate.EventDataQueryFilter;
-import nsa.datawave.query.rewrite.predicate.Filter;
 import nsa.datawave.query.rewrite.predicate.TimeFilter;
 import nsa.datawave.query.util.CompositeMetadata;
 import nsa.datawave.query.util.TypeMetadata;
@@ -65,7 +64,7 @@ public class Aggregation implements Function<Entry<DocumentData,Document>,Entry<
         
         // set the document context on the attribute filter
         if (attrFilter != null) {
-            attrFilter.setDocumentKey(docData.getKey());
+            attrFilter.startNewDocument(docData.getKey());
         }
         
         // Only load attributes for this document that fall within the expected date range
