@@ -1024,8 +1024,8 @@ public class JexlASTHelper {
                 }
             } else if (RANGE_NODE_CLASSES.contains(child.getClass())) {
                 
-                boolean hasMethod = ((AtomicBoolean) child.jjtAccept(new JexlASTHelper.HasMethodVisitor(), new AtomicBoolean(false))).get();
-                
+                boolean hasMethod = HasMethodVisitor.hasMethod(child);
+
                 String fieldName = JexlASTHelper.getIdentifier(child);
                 
                 if (hasMethod && otherNodes != null) {
@@ -1364,7 +1364,11 @@ public class JexlASTHelper {
     }
     
     public static class HasMethodVisitor extends BaseVisitor {
-        
+
+        public static <T extends JexlNode> boolean hasMethod(T script) {
+            return ((AtomicBoolean) script.jjtAccept(new HasMethodVisitor(), new AtomicBoolean(false))).get();
+        }
+
         @Override
         public Object visit(ASTMethodNode node, Object data) {
             AtomicBoolean state = (AtomicBoolean) data;
