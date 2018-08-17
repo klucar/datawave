@@ -602,7 +602,7 @@ public class IteratorBuildingVisitor extends BaseVisitor {
         builder.setFieldsToAggregate(fieldsToAggregate);
         builder.setDatatypeFilter(datatypeFilter);
         builder.setKeyTransform(fiAggregator);
-        builder.canBuildDocument(!limitLookup && this.isQueryFullySatisfied);
+        builder.forceDocumentBuild(!limitLookup && this.isQueryFullySatisfied);
         node.childrenAccept(this, builder);
         
         // A EQNode may be of the form FIELD == null. The evaluation can
@@ -1016,7 +1016,7 @@ public class IteratorBuildingVisitor extends BaseVisitor {
             throw new DatawaveFatalQueryException(qe);
         }
         builder.negateAsNeeded(data);
-        builder.canBuildDocument(!limitLookup && this.isQueryFullySatisfied);
+        builder.forceDocumentBuild(!limitLookup && this.isQueryFullySatisfied);
         ivarate(builder, source, data);
     }
     
@@ -1051,7 +1051,7 @@ public class IteratorBuildingVisitor extends BaseVisitor {
         
         // If this is actually negated, then this will be added to excludes. Do not negate in the ivarator
         builder.setNegated(false);
-        builder.canBuildDocument(!limitLookup && this.isQueryFullySatisfied);
+        builder.forceDocumentBuild(!limitLookup && this.isQueryFullySatisfied);
         
         ivarate(builder, source, data);
     }
@@ -1105,7 +1105,7 @@ public class IteratorBuildingVisitor extends BaseVisitor {
                             MessageFormat.format("{0}", "ExceededValueThresholdMarkerJexlNode"));
             throw new DatawaveFatalQueryException(qe);
         }
-        builder.canBuildDocument(!limitLookup && this.isQueryFullySatisfied);
+        builder.forceDocumentBuild(!limitLookup && this.isQueryFullySatisfied);
         ivarate(builder, source, data);
     }
     
