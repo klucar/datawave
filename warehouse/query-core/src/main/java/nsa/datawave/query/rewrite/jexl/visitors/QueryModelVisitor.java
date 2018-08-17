@@ -30,7 +30,7 @@ public class QueryModelVisitor extends RebuildingVisitor {
     private HashSet<ASTAndNode> expandedNodes;
     private Set<String> validFields;
     private SimpleQueryModelVisitor simpleQueryModelVisitor;
-
+    
     public QueryModelVisitor(QueryModel queryModel, Set<String> validFields) {
         this.queryModel = queryModel;
         this.expandedNodes = Sets.newHashSet();

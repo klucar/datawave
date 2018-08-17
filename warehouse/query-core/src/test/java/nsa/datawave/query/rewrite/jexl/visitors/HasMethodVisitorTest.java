@@ -31,8 +31,7 @@ public class HasMethodVisitorTest {
             String query = originalQueries[i];
             ASTJexlScript script = JexlASTHelper.parseJexlQuery(query);
             
-            Assert.assertEquals("query:" + query, expectedResults[i],
-                            JexlASTHelper.HasMethodVisitor.hasMethod(script));
+            Assert.assertEquals("query:" + query, expectedResults[i], JexlASTHelper.HasMethodVisitor.hasMethod(script));
         }
     }
 }

@@ -22,7 +22,7 @@ public class JexlStringBuildingVisitor extends BaseVisitor {
     protected static final Logger log = Logger.getLogger(JexlStringBuildingVisitor.class);
     protected static final char BACKSLASH = '\\';
     protected static final char STRING_QUOTE = '\'';
-
+    
     // allowed methods for composition. Nothing that mutates the collection is allowed, thus we have:
     private Set<String> allowedMethods = Sets.newHashSet("contains", "retainAll", "containsAll", "isEmpty", "size", "equals", "hashCode", "getValueForGroup",
                     "getGroupsForValue", "getValuesForGroups", "toString", "values", "min", "max", "lessThan", "greaterThan", "compareWith");
@@ -553,12 +553,18 @@ public class JexlStringBuildingVisitor extends BaseVisitor {
     
     @Override
     public Object visit(ASTAssignment node, Object data) {
+        boolean requiresParens = !(node.jjtGetParent() instanceof ASTReferenceExpression);
         StringBuilder sb = (StringBuilder) data;
+        if (requiresParens)
+            sb.append('(');
         for (int i = 0; i < node.jjtGetNumChildren(); ++i) {
             node.jjtGetChild(i).jjtAccept(this, sb);
             sb.append(" = ");
         }
         sb.setLength(sb.length() - " = ".length());
+        if (requiresParens) {
+            sb.append(')');
+        }
         return sb;
     }
 }
