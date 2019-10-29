@@ -1323,17 +1323,18 @@ public class QueryIterator extends QueryOptions implements YieldingKeyValueItera
                         .setFieldsToAggregate(this.getNonEventFields()).setAttrFilter(this.getEvaluationFilter())
                         .setDatatypeFilter(this.getFieldIndexKeyDataTypeFilter()).setFiAggregator(this.fiAggregator)
                         .setHdfsFileSystem(this.getFileSystemCache()).setQueryLock(this.getQueryLock())
-                        .setIvaratorCacheDirURIAlternatives(this.getIvaratorCacheBaseURIsAsList()).setQueryId(this.getQueryId()).setScanId(this.getScanId())
+                        .setIvaratorCacheDirConfigs(this.getIvaratorCacheDirConfigs()).setQueryId(this.getQueryId()).setScanId(this.getScanId())
                         .setIvaratorCacheSubDirPrefix(this.getHdfsCacheSubDirPrefix()).setHdfsFileCompressionCodec(this.getHdfsFileCompressionCodec())
                         .setIvaratorCacheBufferSize(this.getIvaratorCacheBufferSize())
                         .setIvaratorCacheScanPersistThreshold(this.getIvaratorCacheScanPersistThreshold())
                         .setIvaratorCacheScanTimeout(this.getIvaratorCacheScanTimeout()).setMaxRangeSplit(this.getMaxIndexRangeSplit())
-                        .setIvaratorMaxOpenFiles(this.getIvaratorMaxOpenFiles()).setIvaratorSources(this, this.getMaxIvaratorSources())
-                        .setIncludes(indexedFields).setTermFrequencyFields(this.getTermFrequencyFields()).setIsQueryFullySatisfied(isQueryFullySatisfied)
-                        .setSortedUIDs(sortedUIDs).limit(documentRange).disableIndexOnly(disableFiEval).limit(this.sourceLimit)
-                        .setCollectTimingDetails(this.collectTimingDetails).setQuerySpanCollector(this.querySpanCollector)
-                        .setIndexOnlyFields(this.getAllIndexOnlyFields()).setAllowTermFrequencyLookup(this.allowTermFrequencyLookup)
-                        .setCompositeMetadata(compositeMetadata).setExceededOrEvaluationCache(exceededOrEvaluationCache);
+                        .setIvaratorMaxOpenFiles(this.getIvaratorMaxOpenFiles()).setIvaratorNumRetries(this.getIvaratorNumRetries())
+                        .setIvaratorSources(this, this.getMaxIvaratorSources()).setIncludes(indexedFields)
+                        .setTermFrequencyFields(this.getTermFrequencyFields()).setIsQueryFullySatisfied(isQueryFullySatisfied).setSortedUIDs(sortedUIDs)
+                        .limit(documentRange).disableIndexOnly(disableFiEval).limit(this.sourceLimit).setCollectTimingDetails(this.collectTimingDetails)
+                        .setQuerySpanCollector(this.querySpanCollector).setIndexOnlyFields(this.getAllIndexOnlyFields())
+                        .setAllowTermFrequencyLookup(this.allowTermFrequencyLookup).setCompositeMetadata(compositeMetadata)
+                        .setExceededOrEvaluationCache(exceededOrEvaluationCache);
         // TODO: .setStatsPort(this.statsdHostAndPort);
     }
     

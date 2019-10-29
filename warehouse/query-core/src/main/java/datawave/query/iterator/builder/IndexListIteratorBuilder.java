@@ -7,15 +7,11 @@ import datawave.query.iterator.logic.DocumentAggregatingIterator;
 import datawave.query.iterator.logic.IndexIteratorBridge;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.PartialKey;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Logger;
 import org.apache.lucene.util.fst.FST;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Set;
 
 /**
@@ -62,22 +58,13 @@ public class IndexListIteratorBuilder extends IvaratorBuilder implements Iterato
     @SuppressWarnings("unchecked")
     @Override
     public NestedIterator<Key> build() {
-        if (notNull(field, (values != null ? values : fst), negated, source, datatypeFilter, timeFilter, keyTform, ivaratorCacheDirURI, hdfsFileSystem)) {
+        if (notNull(field, (values != null ? values : fst), negated, source, datatypeFilter, timeFilter, keyTform, ivaratorCacheDirs)) {
             if (log.isTraceEnabled()) {
                 log.trace("Generating ivarator (caching field index iterator) for " + field + (negated ? "!~" : "=~") + value);
             }
+            
             // get the hadoop file system and a temporary directory
-            final URI hdfsCacheURI;
-            try {
-                hdfsCacheURI = new URI(ivaratorCacheDirURI);
-                hdfsFileSystem.mkdirs(new Path(hdfsCacheURI));
-            } catch (MalformedURLException e) {
-                throw new IllegalStateException("Unable to load hadoop configuration", e);
-            } catch (IOException e) {
-                throw new IllegalStateException("Unable to create hadoop file system", e);
-            } catch (URISyntaxException e) {
-                throw new IllegalStateException("Invalid hdfs cache dir URI: " + ivaratorCacheDirURI, e);
-            }
+            validateIvaratorCacheDirs(ivaratorCacheDirs);
             
             DocumentIterator docIterator = null;
             try {
@@ -87,8 +74,8 @@ public class IndexListIteratorBuilder extends IvaratorBuilder implements Iterato
                     listIterator = DatawaveFieldIndexListIteratorJexl.builder().withFieldName(new Text(field)).withValues(values).withTimeFilter(timeFilter)
                                     .withDatatypeFilter(datatypeFilter).negated(negated).withScanThreshold(ivaratorCacheScanPersistThreshold)
                                     .withScanTimeout(ivaratorCacheScanTimeout).withHdfsBackedSetBufferSize(ivaratorCacheBufferSize)
-                                    .withMaxRangeSplit(maxRangeSplit).withMaxOpenFiles(ivaratorMaxOpenFiles).withFileSystem(hdfsFileSystem)
-                                    .withUniqueDir(new Path(hdfsCacheURI)).withQueryLock(queryLock).allowDirResuse(true)
+                                    .withMaxRangeSplit(maxRangeSplit).withMaxOpenFiles(ivaratorMaxOpenFiles).withNumRetries(ivaratorNumRetries)
+                                    .withIvaratorCacheDirs(ivaratorCacheDirs).withQueryLock(queryLock).allowDirResuse(true)
                                     .withReturnKeyType(PartialKey.ROW_COLFAM_COLQUAL_COLVIS_TIME).withSortedUUIDs(sortedUIDs)
                                     .withCompositeMetadata(compositeMetadata).withCompositeSeekThreshold(compositeSeekThreshold).withTypeMetadata(typeMetadata)
                                     .withIteratorEnv(env).build();
@@ -97,8 +84,8 @@ public class IndexListIteratorBuilder extends IvaratorBuilder implements Iterato
                     listIterator = DatawaveFieldIndexListIteratorJexl.builder().withFieldName(new Text(field)).withFST(fst).withTimeFilter(timeFilter)
                                     .withDatatypeFilter(datatypeFilter).negated(negated).withScanThreshold(ivaratorCacheScanPersistThreshold)
                                     .withScanTimeout(ivaratorCacheScanTimeout).withHdfsBackedSetBufferSize(ivaratorCacheBufferSize)
-                                    .withMaxRangeSplit(maxRangeSplit).withMaxOpenFiles(ivaratorMaxOpenFiles).withFileSystem(hdfsFileSystem)
-                                    .withUniqueDir(new Path(hdfsCacheURI)).withQueryLock(queryLock).allowDirResuse(true)
+                                    .withMaxRangeSplit(maxRangeSplit).withMaxOpenFiles(ivaratorMaxOpenFiles).withNumRetries(ivaratorNumRetries)
+                                    .withIvaratorCacheDirs(ivaratorCacheDirs).withQueryLock(queryLock).allowDirResuse(true)
                                     .withReturnKeyType(PartialKey.ROW_COLFAM_COLQUAL_COLVIS_TIME).withSortedUUIDs(sortedUIDs)
                                     .withCompositeMetadata(compositeMetadata).withCompositeSeekThreshold(compositeSeekThreshold).withTypeMetadata(typeMetadata)
                                     .withIteratorEnv(env).build();
@@ -135,8 +122,7 @@ public class IndexListIteratorBuilder extends IvaratorBuilder implements Iterato
             datatypeFilter = null;
             keyTform = null;
             timeFilter = null;
-            hdfsFileSystem = null;
-            ivaratorCacheDirURI = null;
+            ivaratorCacheDirs = null;
             return itr;
         } else {
             StringBuilder msg = new StringBuilder(256);
