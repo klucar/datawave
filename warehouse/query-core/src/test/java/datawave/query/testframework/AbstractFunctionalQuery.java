@@ -537,7 +537,7 @@ public abstract class AbstractFunctionalQuery implements QueryLogicTestHarness.T
         final List<String> fstDirs = new ArrayList<>();
         for (int d = 1; d <= hdfsLocations; d++) {
             Path ivCache = Paths.get(Files.createTempDir().toURI());
-            dirs.add(ivCache.toAbsolutePath().toString());
+            dirs.add(ivCache.toUri().toString());
             if (fst) {
                 ivCache = Paths.get(Files.createTempDir().toURI());
                 fstDirs.add(ivCache.toAbsolutePath().toString());
