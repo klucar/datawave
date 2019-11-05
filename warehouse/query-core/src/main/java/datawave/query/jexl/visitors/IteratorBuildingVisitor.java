@@ -1564,7 +1564,8 @@ public class IteratorBuildingVisitor extends BaseVisitor {
     }
     
     public IteratorBuildingVisitor setIncludes(Collection<String> includes) {
-        this.includeReferences = includes;
+        this.includeReferences = Sets.newHashSet(includes);
+        this.includeReferences.add(Constants.ANY_FIELD);
         return this;
     }
     
