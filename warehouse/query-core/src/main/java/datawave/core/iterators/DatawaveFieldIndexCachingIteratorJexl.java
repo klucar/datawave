@@ -371,6 +371,8 @@ public abstract class DatawaveFieldIndexCachingIteratorJexl extends WrappingIter
         
         this.ivaratorCacheDirs = builder.ivaratorCacheDirs;
         
+        // Note: We have already selected the control directory at random in the DefaultQueryPlanner
+        // @see DefaultQueryPlanner#getShuffledIvaratoCacheDirConfigs(ShardQueryConfiguration)
         if (ivaratorCacheDirs.size() > 0) {
             this.controlFs = ivaratorCacheDirs.get(0).getFs();
             this.controlDir = new Path(ivaratorCacheDirs.get(0).getPathURI());
@@ -1400,7 +1402,7 @@ public abstract class DatawaveFieldIndexCachingIteratorJexl extends WrappingIter
             String reason = null;
             Exception exc = null;
             
-            while (!done && count < 3) {
+            while (!done && count <= numRetries) {
                 count++;
                 try {
                     FSDataOutputStream stream = null;
@@ -1450,7 +1452,7 @@ public abstract class DatawaveFieldIndexCachingIteratorJexl extends WrappingIter
                         } else {
                             reason = "Failed to create file, query dir does not exist: " + file;
                             // in this case, we really want to stop this iterator as we are cancelled
-                            count = 3;
+                            count = numRetries + 1;
                         }
                     } catch (Exception e2) {
                         reason = "Failed to create file: " + file;
